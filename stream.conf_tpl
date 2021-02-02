@@ -1,0 +1,10 @@
+upstream <project> {
+    server <project>:22 max_fails=5;
+}
+    server {
+    listen        22XX;
+    proxy_pass    <project>;
+
+    access_log  /var/log/nginx/stream_<project>.log  basic;
+
+}

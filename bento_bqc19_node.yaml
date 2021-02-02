@@ -1,0 +1,71 @@
+#cloud-config
+packages:
+  - git
+  - pciutils
+  - unzip
+  - openssl-devel
+  - libuuid-devel
+  - libseccomp-devel
+  - wget
+  - quashfs-tools
+  - cryptsetup
+
+users:
+  - name: sake
+    groups: adm, wheel, systemd-journal
+    homedir: /sake
+    selinux_user: unconfined_u
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG2Un6lcY8cYVVhWguuduVMfi/C2vO0Uc3dVLXv4GRyoOyGP7JA60vJz6QC8QYBsL8cCg1lko05Lk1477yq1Mj5Wfg5E8iZ6T3MweHJ+ZLsRxOatxDO0GX3XTQk8Vd7HxYgclaRnSFwCJeL41euuMjTdapXUb0ycku6ipmGaxx2JupOE/KB8w8RjHxWX010FyR26NiPpALzCYzwALm+VaLZc+C6Io1LT1BNzr00hEVxMEyEjWQipaUTJKMdCxXtVNdnQieGtlGLw8U1uIarEHp/6eMt9/KEATX2CJhD8/hWJmKkfvaQUHNoU8c5z0mqNpraJAC6xWCdpbjUfE7O4c3 poq@moins
+  - name: bqc19
+    groups: adm, wheel, systemd-journal, bqc19-data
+    selinux_user: unconfined_u
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG2Un6lcY8cYVVhWguuduVMfi/C2vO0Uc3dVLXv4GRyoOyGP7JA60vJz6QC8QYBsL8cCg1lko05Lk1477yq1Mj5Wfg5E8iZ6T3MweHJ+ZLsRxOatxDO0GX3XTQk8Vd7HxYgclaRnSFwCJeL41euuMjTdapXUb0ycku6ipmGaxx2JupOE/KB8w8RjHxWX010FyR26NiPpALzCYzwALm+VaLZc+C6Io1LT1BNzr00hEVxMEyEjWQipaUTJKMdCxXtVNdnQieGtlGLw8U1uIarEHp/6eMt9/KEATX2CJhD8/hWJmKkfvaQUHNoU8c5z0mqNpraJAC6xWCdpbjUfE7O4c3 poq@moins
+      - ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAlDucgrcjWRl3fEGLSoRl7a2izErUP/BNw9/+HSTfZUPaYhHgK06jPjp7fZAnudf5+fUl75xDvdBb3jiA7EUBM1TxZCreI/ZUCTtYFqNCedYo8zyB+RuuQznoJkqJIn8u67yDewftP5jz3MKGIe0ErxdisL/405AC23Bw2UcsRC/5RSe+X3aUQFwU4VSrDjVGMGJUB5xOEnrmIeRz8HE390T1zdzCfhrRF5puk4u4h7LeYp7Uorb5S5E0dx3DklSkYP65s6toGpZBUkO3W/J4w/g9n0XPhbkiY6PHi320SpYir8RHZnY+FB+IsD1TITJ0r6pIEWLWFxNDB7GFt0PXKQ== ksenia
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCvIJZT7+JT230zFqHDVNDrxHk78U/JP64w7wm94+Z7/Ce+TNlbEH7W3lQ5DzdzIQfum1Zu4jnkhHgDV6V+dFrD1tb5AmzSErkA1r3PZSzj0w3FHU5Z43341BiAuw9EVX8Qa8SrufUwTzUyL3U0Uc7SxuxCO1WZa8LH3ISL/72gfoerJ+2JxC8KaEyg3JpVrzFn9FFz0y9K/JVk3ZCuKf+pDX1Bp0mpU8W5KG+YUv9dg3OsTF1brywlq5qyDjBy0A0OeVyCLj/EhCEwmeBW0S/q9pa7thTNaLtTdVptefHBBYEx3lXHCE6jpDT9y2AUCV9o7K2sXRdBiG9O2hRNmaxxnhIN8SlCN3qMeLhZ2wRrCJ4Q7hWIUZBoSBGgAO3aw6juRO3920XpK8nkYKaMXfFfeN5p8gy5epGsuY2IplhJ7tUBie7uFtdfIbikYX6XCCFE79rpMgGjTOF/imeIFxcyBii7IdQV4vDdKdgWO1va54QDz1y7sQ/uL2msz8AkC6k= brennan@Wolfsbane
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCh74kWmrjV8UUfwHf/dGcKQ7SVhVGYHRJR9ufKUPdnd1Fd4CmmDJxrjHSmhzS7+ZWiyz2Ho8b2GG9AT0BwK0hrZIr7pwDAOGfHjnbL8LHF8EyxCSv0r2FyxxW6YvjsNt0Dt2c42Ehe4t+RnGXX8Koj2GW8WCRHWIEViDNFDC0tuVlzfOr9IhYqdQhBSMusCh82oU5VxpqeeOuMgldfnyuyUuWoiDLExjjAmzMjFKFFs16pTuz3jt6AxZPFDD5ViUryVDqeOkjINHxGhKEwEu/y8wKucb5NXh+WNNQfdhNRSyBBG7kZv2SIrT4JOS7Uq72LDxsHkgRRo7GkC5iNN9VjYH1YiOemX4etUfEgHQiWH2eAFOABl1ZfTM6vHFTFtbAXtIgUOK7VkbmJxFpMCxun37dS1XIb990fXfli9A9pPSbGdBMAWNclOUKc/j+2ysVzboAhJeSYUW9u4gJT5v0uR/2zHQpCmYptWdUgO8UfjwLZoQRsmlhZBjXyuVUcNy9hQyvireA+ZvE6axwbhr0kS3M1ZSyh2tbaGtyu3txxlh0LdrPPP7Rg1d8E7C6NEwk7VNw/kBvGytcjbH0BRqBfurcbuZww9fwlCNNDVujUF0IB15MlUTSBuUPWzdmnC4BtTIcg+CKJ3ofy3JMpvUl4Sd408WmYd80idT8h2Et3iQ== Brownlee@heap
+
+  - name: bqc19-data
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG2Un6lcY8cYVVhWguuduVMfi/C2vO0Uc3dVLXv4GRyoOyGP7JA60vJz6QC8QYBsL8cCg1lko05Lk1477yq1Mj5Wfg5E8iZ6T3MweHJ+ZLsRxOatxDO0GX3XTQk8Vd7HxYgclaRnSFwCJeL41euuMjTdapXUb0ycku6ipmGaxx2JupOE/KB8w8RjHxWX010FyR26NiPpALzCYzwALm+VaLZc+C6Io1LT1BNzr00hEVxMEyEjWQipaUTJKMdCxXtVNdnQieGtlGLw8U1uIarEHp/6eMt9/KEATX2CJhD8/hWJmKkfvaQUHNoU8c5z0mqNpraJAC6xWCdpbjUfE7O4c3 poq@moins
+
+
+runcmd:
+  - mkdir /data
+  - mkfs.xfs /dev/vdb
+  - echo "/dev/vdb                                 /data                    xfs     defaults        0 0" >> /etc/fstab
+  - mount -a
+  - chown  bqc19-data:bqc19-data /data/
+  - restorecon -R sake
+    - "(echo -e '\nHostKeyAlgorithms ssh-rsa\n' >> /etc/ssh/sshd_config && systemctl restart sshd)"
+  - yum upgrade -y
+  - systemctl disable kdump
+  - sed -i 's/crashkernel=auto/crashkernel=no/' /etc/default/grub
+  - sed -i 's/GRUB_CMDLINE_LINUX="[^"]*/& nouveau.modeset=0 rd.driver.blacklist=nouveau/' /etc/default/grub
+  - grub2-mkconfig -o /boot/grub2/grub.cfg
+  - chmod 755 $(ls /usr/share/doc/rsync*/support/rrsync)
+  - sudo ln -s $(ls /usr/share/doc/rsync*/support/rrsync) /usr/bin/rrsync
+  - yum groupinstall -y 'Development Tools'
+  - GO_VERSION=1.15.6 OS=linux ARCH=amd64 &&  wget https://dl.google.com/go/go${GO_VERSION}.$OS-$ARCH.tar.gz &&  tar -C /usr/local -xzvf go${GO_VERSION}.${OS}-${ARCH}.tar.gz &&  rm -f go${GO_VERSION}.${OS}-${ARCH}.tar.gz
+  - SINGULARITY_VERSION=3.6.4 && wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz &&     tar -xzf singularity-${SINGULARITY_VERSION}.tar.gz
+  - cd singularity && export PATH=${PATH}:/usr/local/go/bin/ && export HOME=/root && ./mconfig &&     make -C ./builddir &&   make -C ./builddir install
+  # - rm -r singularity singularity-*gz
+  - reboot -n
+
+write_files:
+  - content: |
+      127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+      192.168.23.22 proxy_1
+    path: /etc/hosts
+    permissions: "0644"
+  - content: source /usr/local/etc/bash_completion.d/singularity
+    path: /etc/profile.d/singularity.sh
+    permissions: "0644"
+
+disable_ec2_metadata: false
+timezone: "UTC"
+fqdn: "bqc19"
+output: { all: "| tee -a /var/log/cloud-init-output.log" }
