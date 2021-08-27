@@ -8,9 +8,9 @@
 We create the volume and attatch it to the new server.
 All the node provisioning is done with cloud init file fed in the `--user-data` option
 ```
-openstack volume create --size 1000 bqc19-data
-openstack server create --flavor p2-3gb --image CentOS-7-x64-2020-03  --nic net-id=a5bee81b-1dc3-401b-8d81-0f48d5705d42 --security-group default  --security-group obentoyasan-secgroup  --boot-from-volume 10   --user-data bento_<BENTO PROJECT NAME>_node.yaml   --block-device-mapping vdb=<BENTO PROJECT NAME>-data  <BENTO PROJECT NAME>
-
+openstack volume create --size 1000 <project name>-data
+openstack volume create --size 20 <project name>-admin
+openstack server create --flavor p2-3gb --image CentOS-7-x64-2020-1  --nic net-id=a5bee81b-1dc3-401b-8d81-0f48d5705d42 --security-group default  --security-group obentoyasan-secgroup  --boot-from-volume 8  --user-data bento_<project name>_node.yaml   --block-device-mapping vdb=<project name>-data  --block-device-mapping vdc=<project name>-admin <project name>
 
 
 
