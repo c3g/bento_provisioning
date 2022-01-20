@@ -10,15 +10,17 @@ packages:
   - docker-ce
   - containerd.io
   - htop
+  - tree
 
 yum_repos:
   epel-release:
-    baseurl: http://download.fedoraproject.org/pub/epel/7/$basearch
+    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
     enabled: true
     failovermethod: priority
     gpgcheck: true
-    gpgkey: http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
-    name: Extra Packages for Enterprise Linux 7 - Release
+    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+    name: Extra Packages for Enterprise Linux 8 - Release
   docker-ce-stable:
     baseurl: >
      https://download.docker.com/linux/centos/$releasever/$basearch/stable
@@ -35,7 +37,7 @@ users:
     selinux_user: unconfined_u
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG2Un6lcY8cYVVhWguuduVMfi/C2vO0Uc3dVLXv4GRyoOyGP7JA60vJz6QC8QYBsL8cCg1lko05Lk1477yq1Mj5Wfg5E8iZ6T3MweHJ+ZLsRxOatxDO0GX3XTQk8Vd7HxYgclaRnSFwCJeL41euuMjTdapXUb0ycku6ipmGaxx2JupOE/KB8w8RjHxWX010FyR26NiPpALzCYzwALm+VaLZc+C6Io1LT1BNzr00hEVxMEyEjWQipaUTJKMdCxXtVNdnQieGtlGLw8U1uIarEHp/6eMt9/KEATX2CJhD8/hWJmKkfvaQUHNoU8c5z0mqNpraJAC6xWCdpbjUfE7O4c3 poq@moins
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKNh8QVIYdqgnPK1jS2slJ7Xmcz3eEfqGRaSKqKK3gSF poq@frugal
   - name: bento
     groups: adm, wheel, systemd-journal, bento-v2-dev-data, docker
     selinux_user: unconfined_u
@@ -83,5 +85,5 @@ runcmd:
 
 disable_ec2_metadata: false
 timezone: "UTC"
-fqdn: "ichange-v2"
+fqdn: bqc19
 output: { all: "| tee -a /var/log/cloud-init-bento-config.log" }
