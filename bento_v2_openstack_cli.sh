@@ -1,18 +1,14 @@
 #!/bin/bash
 
-# DO that in options?
-PROJECT_NAME=bqc19
-DATA_VOLUME_SIZE=3000 # 3TB
-FLAVOR=p8-12gb
-IMAGE=Rocky-8-x64-2021-06
-LAN_ID=9ddbf1b2-a335-470b-a5b3-d3e4bd2b91cc
+source config.sh
 
-DOCKER_VOLUME_SIZE=20
-ROOT_VOLUME_SIZE=10
 
 
 usage (){
-echo "usage: $0 Deploy a bento node with root, data and docker volumes"
+echo ""
+echo "usage: $0 <project name>"
+echo "    Deploy a bento node with root, data and docker volumes"
+echo "    <project name> the name of the openstack project, it is also the name host vm name."
 echo "options"
 echo "    -n        DO not create the volume to mount"
 
@@ -33,11 +29,31 @@ while getopts ":hn" opt; do
   esac
 done
 
+shift $((OPTIND-1))
+# move the exec line to a script
+
+if [ $# -ne 1 ] ; then
+   usage 
+   exit 1
+fi
+PROJECT_NAME=$1
+while true; do
+
+read -p "The project name is : $PROJECT_NAME (y/n) " yn
+
+case $yn in 
+	[yY] ) echo proceeding with $PROJECT_NAME;
+		break;;
+	* ) echo refusing;
+               exit 1;;
+esac
+
+done
+
 mkdir -p .tmp/
 YAML_CONFIG=.tmp/bento_v2_${PROJECT_NAME}.yaml
-cp template_bento_v2.yaml $YAML_CONFIG
-# BENTO_HOSTNAME=${PROJECT_NAME} envsubst < template_bento_v2.yaml \
-    # > $YAML_CONFIG
+BENTO_HOSTNAME=${PROJECT_NAME} envsubst  '${BENTO_HOSTNAME}' \
+< template_bento_v2.yaml > $YAML_CONFIG
 
 # TODO check if the volume exist already instead of a having a flag
  if [ -z ${NO_VOLUME+x} ]; then
@@ -45,10 +61,10 @@ cp template_bento_v2.yaml $YAML_CONFIG
   openstack volume create --size 20 ${PROJECT_NAME}-docker-sandbox
 fi
 
-openstack server create --key-name "poq sur moins" --flavor  ${FLAVOR} \
+openstack server create --key-name ${SSH_KEY} --flavor  ${FLAVOR} \
   --image ${IMAGE} \
   --nic net-id=${LAN_ID} --security-group default  \
-  --security-group bento-dev  --boot-from-volume ${ROOT_VOLUME_SIZE}  \
+  --security-group ${SECURITY_GROUP}  --boot-from-volume ${ROOT_VOLUME_SIZE}  \
   --user-data  ${YAML_CONFIG}  \
   --block-device-mapping vdb=${PROJECT_NAME}-data  \
   --block-device-mapping vdc=${PROJECT_NAME}-docker-sandbox \
@@ -57,21 +73,27 @@ openstack server create --key-name "poq sur moins" --flavor  ${FLAVOR} \
 SERVER_ID=$(openstack server list -f json \
     |  jq -r   '.[] | select((."Name"=="'${PROJECT_NAME}'")).ID')
 
+
 # get one floating ip
 ip=$(openstack  floating ip list   -f json \
     | jq -r '[.[] | select(."Fixed IP Address"==null)][0]."Floating IP Address"')
 
-# create one if it os empty
-if [ -z "${ip}" ]; then
+# create one if there is not one free
+if [ "${ip}"  == "null" ]; then
   openstack  floating ip create external-network
   ip=$(openstack  floating ip list   -f json \
     | jq -r '.[] | select(."Fixed IP Address"==null)."Floating IP Address"')
 fi
 
-while ! openstack server show  -f json ichange | jq -r '.status ' | grep 'ACTIVE'
+while ! openstack server show  -f json ${PROJECT_NAME} | jq -r '.status ' | grep 'ACTIVE'
 do
   echo waiting for build to complete
   sleep 2
 done
 
 openstack server add floating ip  ${PROJECT_NAME} ${ip}
+
+# adding name to root volume (server take some time before mount is visible)
+VOLUME_ROOT=$(openstack volume list -f json  \
+| jq -r   '.[] | select((."Attached to"[]."device"=="/dev/vda" and ."Attached to"[]."server_id"=="'${SERVER_ID}'")).ID')
+openstack volume set --name ${PROJECT_NAME}-root $VOLUME_ROOT
