@@ -1,14 +1,10 @@
 #!/bin/bash
 
-source config.sh
-
-
-
 usage (){
 echo ""
-echo "usage: $0 <project name>"
+echo "usage: $0 <project config>"
 echo "    Deploy a bento node with root, data and docker volumes"
-echo "    <project name> the name of the openstack project, it is also the name host vm name."
+echo "    <project config> the path to the project configuration file."
 echo "options"
 echo "    -n        DO not create the volume to mount"
 
@@ -36,8 +32,10 @@ if [ $# -ne 1 ] ; then
    usage 
    exit 1
 fi
-PROJECT_NAME=$1
+PROJECT_CONFIG_FILE=$1
 while true; do
+
+source $PROJECT_CONFIG_FILE
 
 read -p "The project name is : $PROJECT_NAME (y/n) " yn
 
@@ -51,9 +49,9 @@ esac
 done
 
 mkdir -p .tmp/
-YAML_CONFIG=.tmp/bento_v2_${PROJECT_NAME}.yaml
+YAML_CONFIG=.tmp/bento_${PROJECT_NAME}.yaml
 BENTO_HOSTNAME=${PROJECT_NAME} envsubst  '${BENTO_HOSTNAME}' \
-< template_bento_v2.yaml > $YAML_CONFIG
+< template_bento.yaml > $YAML_CONFIG
 
 # TODO check if the volume exist already instead of a having a flag
  if [ -z ${NO_VOLUME+x} ]; then
@@ -80,7 +78,7 @@ ip=$(openstack  floating ip list   -f json \
 
 # create one if there is not one free
 if [ "${ip}"  == "null" ]; then
-  openstack  floating ip create external-network
+  openstack  floating ip create ${PUBLIC_NETWORK_ID}
   ip=$(openstack  floating ip list   -f json \
     | jq -r '.[] | select(."Fixed IP Address"==null)."Floating IP Address"')
 fi

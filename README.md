@@ -3,18 +3,30 @@
 
 ## update the openstack projet itself
 
-### Add a new bento node  
+### Add a new bento node
 
-We create the volume and attatch it to the new server.
-All the node provisioning is done with cloud init file fed in the `--user-data` option
+The `bento_openstack_cli.sh` script can be used to quickly create a new Bento node.
+It uses the `openstack` cli to create the server (VM) with required volumes and network interfaces.
+The `cloud-config` file `template_bento.yaml` is used to setup the users, authorised SSH keys, and mounts.
+
+Usage example:
+
+```bash
+# Load the OpenStack RC env variables
+source Bento-openrc.sh
+
+# Lauch the node creation script with a config argument
+bash bento_openstack_cli.sh configs/config_template.sh
+
+# The script will ask to validate the project's name from the config
+
+# If all went well, you should see the new instance
+openstack server list
+
+# If your ssh key is listed in template_bento.yaml and the server has a floating IP, you can ssh with:
+ssh bento@<floating-ip>
 ```
-openstack volume create --size 1000 <project name>-data
-openstack volume create --size 20 <project name>-admin
-openstack server create --flavor p2-3gb --image CentOS-7-x64-2020-1  --nic net-id=a5bee81b-1dc3-401b-8d81-0f48d5705d42 --security-group default  --security-group obentoyasan-secgroup  --boot-from-volume 8  --user-data bento_<project name>_node.yaml   --block-device-mapping vdb=<project name>-data  --block-device-mapping vdc=<project name>-admin <project name>
 
-
-
-```
 
 ### update the security group
 
