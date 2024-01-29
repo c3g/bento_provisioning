@@ -55,8 +55,9 @@ BENTO_HOSTNAME=${PROJECT_NAME} envsubst  '${BENTO_HOSTNAME}' \
 
 # TODO check if the volume exist already instead of a having a flag
  if [ -z ${NO_VOLUME+x} ]; then
-  openstack volume create --size ${DATA_VOLUME_SIZE} ${PROJECT_NAME}-data
-  openstack volume create --size 20 ${PROJECT_NAME}-docker-sandbox
+  openstack volume create --type volumes-ec --size ${DATA_VOLUME_SIZE} ${PROJECT_NAME}-data
+  openstack volume create --type volumes-ssd --size ${APP_VOLUME_SIZE} ${PROJECT_NAME}-app
+  openstack volume create --type volumes-ssd --size 20 ${PROJECT_NAME}-docker-sandbox
 fi
 
 openstack server create --key-name ${SSH_KEY} --flavor  ${FLAVOR} \
@@ -66,6 +67,7 @@ openstack server create --key-name ${SSH_KEY} --flavor  ${FLAVOR} \
   --user-data  ${YAML_CONFIG}  \
   --block-device-mapping vdb=${PROJECT_NAME}-data  \
   --block-device-mapping vdc=${PROJECT_NAME}-docker-sandbox \
+  --block-device-mapping vdd=${PROJECT_NAME}-app \
   ${PROJECT_NAME}
 
 SERVER_ID=$(openstack server list -f json \

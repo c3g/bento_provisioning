@@ -6,5 +6,6 @@ source configs/.env
 # Instance specific configs
 PROJECT_NAME="bento-qa"
 DATA_VOLUME_SIZE=1000
+APP_VOLUME_SIZE=200             # /data volume size in GB
 FLAVOR="ha4-15gb"
-IMAGE="Rocky-8.9-x64-2023-11"
+IMAGE="f95b59a2-99fd-4b7f-912c-d7f17640a791"

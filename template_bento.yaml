@@ -12,23 +12,23 @@ packages:
   - htop
   - tree
 
-yum_repos:
-  epel-release:
-    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
-    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
-    enabled: true
-    failovermethod: priority
-    gpgcheck: true
-    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
-    name: Extra Packages for Enterprise Linux 8 - Release
-  docker-ce-stable:
-    baseurl: >
-     https://download.docker.com/linux/centos/$releasever/$basearch/stable
-    enabled: true
-    failovermethod: priority
-    gpgcheck: true
-    gpgkey: https://download.docker.com/linux/centos/gpg
-    name: Docker CE Stable - Debuginfo $basearch
+# yum_repos:
+#   epel-release:
+#     metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
+#     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
+#     enabled: true
+#     failovermethod: priority
+#     gpgcheck: true
+#     gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+#     name: Extra Packages for Enterprise Linux 8 - Release
+#   docker-ce-stable:
+#     baseurl: >
+#      https://download.docker.com/linux/centos/$releasever/$basearch/stable
+#     enabled: true
+#     failovermethod: priority
+#     gpgcheck: true
+#     gpgkey: https://download.docker.com/linux/centos/gpg
+#     name: Docker CE Stable - Debuginfo $basearch
 
 users:
   - name: sake
@@ -62,20 +62,61 @@ write_files:
     path: /etc/profile.d/sh.local
     permissions: "0644"
 
+device_aliases:
+  docker_disk: /dev/vdc
+  data_disk: /dev/vdb
+  app_disk: /dev/vdb
+
+disk_setup:
+  data_disk:
+    table_type: gpt
+    layout: true
+    overwrite: false
+  app_disk:
+    table_type: gpt
+    layout: true
+    overwrite: true
+  docker_disk:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+  - label: data_fs
+    device: /dev/vdb1
+    filesystem: xfs
+  - label: app_fs
+    device: /dev/vdd1
+    filesystem: xfs
+  - label: docker_fs
+    device: /dev/vdc1
+    filesystem: xfs
+
+mounts:
+  - [ /dev/vdc1, /var/lib/docker, xfs, "defaults,nofail", "0", "0"]
+  - [ /dev/vdb1, /data,           xfs, "defaults,nofail", "0", "0"]
+  - [ /dev/vdd1, /app,            xfs, "defaults,nofail", "0", "0"]
+
+
 runcmd:
   - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod 755 /usr/local/bin/docker-compose
-  - mkdir -p /data /var/lib/docker
-  - parted /dev/vdb --script  mktable gpt
-  - parted /dev/vdc --script  mktable gpt
-  - parted /dev/vdb --script  mkpart primary  xfs 0% 100%
-  - parted /dev/vdc --script  mkpart primary  xfs 0% 100%
-  - mkfs.xfs /dev/vdc1
-  - mkfs.xfs /dev/vdb1
-  - echo "/dev/vdc1                /var/lib/docker       xfs     defaults        0 0" >> /etc/fstab
-  - echo "/dev/vdb1                /data                 xfs     defaults        0 0" >> /etc/fstab
-  - mount -a
-  - chown bento:bento /data/
+  - mkdir -p /data /var/lib/docker /app
+  # - parted /dev/vdb --script  mktable gpt
+  # - parted /dev/vdc --script  mktable gpt
+  # - parted /dev/vdd --script  mktable gpt
+  # - parted /dev/vdb --script  mkpart primary  xfs 0% 100%
+  # - parted /dev/vdc --script  mkpart primary  xfs 0% 100%
+  # - parted /dev/vdd --script  mkpart primary  xfs 0% 100%
+  # - mkfs.xfs /dev/vdc1
+  # - mkfs.xfs /dev/vdb1
+  # - mkfs.xfs /dev/vdd1
+  # - echo "/dev/vdc1                /var/lib/docker       xfs     defaults        0 0" >> /etc/fstab
+  # - echo "/dev/vdb1                /data                 xfs     defaults        0 0" >> /etc/fstab
+  # - echo "/dev/vdd1                /app                  xfs     defaults        0 0" >> /etc/fstab
+  # - mount -a
+  - chown -R bento:bento /data/
+  - chown -R bento:bento /app
   - restorecon -R sake
      - "(echo -e '\nHostKeyAlgorithms ssh-rsa\n' >> /etc/ssh/sshd_config && systemctl restart sshd)"
   - yum upgrade -y
