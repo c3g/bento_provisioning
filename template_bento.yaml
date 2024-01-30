@@ -9,26 +9,27 @@ packages:
   - haveged
   - docker-ce
   - containerd.io
+  - docker-compose-plugin
   - htop
   - tree
 
-# yum_repos:
-#   epel-release:
-#     metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
-#     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
-#     enabled: true
-#     failovermethod: priority
-#     gpgcheck: true
-#     gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
-#     name: Extra Packages for Enterprise Linux 8 - Release
-#   docker-ce-stable:
-#     baseurl: >
-#      https://download.docker.com/linux/centos/$releasever/$basearch/stable
-#     enabled: true
-#     failovermethod: priority
-#     gpgcheck: true
-#     gpgkey: https://download.docker.com/linux/centos/gpg
-#     name: Docker CE Stable - Debuginfo $basearch
+yum_repos:
+  epel-release:
+    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
+    enabled: true
+    failovermethod: priority
+    gpgcheck: true
+    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
+    name: Extra Packages for Enterprise Linux 9 - Release
+  docker-ce-stable:
+    baseurl: >
+     https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    enabled: true
+    failovermethod: priority
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    name: Docker CE Stable - Debuginfo $basearch
 
 users:
   - name: sake
@@ -63,9 +64,9 @@ write_files:
     permissions: "0644"
 
 device_aliases:
-  docker_disk: /dev/vdc
   data_disk: /dev/vdb
-  app_disk: /dev/vdb
+  docker_disk: /dev/vdc
+  app_disk: /dev/vdd
 
 disk_setup:
   data_disk:
@@ -85,11 +86,11 @@ fs_setup:
   - label: data_fs
     device: /dev/vdb1
     filesystem: xfs
-  - label: app_fs
-    device: /dev/vdd1
-    filesystem: xfs
   - label: docker_fs
     device: /dev/vdc1
+    filesystem: xfs
+  - label: app_fs
+    device: /dev/vdd1
     filesystem: xfs
 
 mounts:
@@ -99,8 +100,9 @@ mounts:
 
 
 runcmd:
-  - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod 755 /usr/local/bin/docker-compose
+  # - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  # - chmod 755 /usr/local/bin/docker-compose
+  - 
   - mkdir -p /data /var/lib/docker /app
   # - parted /dev/vdb --script  mktable gpt
   # - parted /dev/vdc --script  mktable gpt
