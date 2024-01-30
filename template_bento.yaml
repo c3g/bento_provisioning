@@ -1,6 +1,7 @@
 #cloud-config
 packages:
   - git
+  - vim
   - pciutils
   - unzip
   - wget
@@ -12,10 +13,10 @@ packages:
   - docker-compose-plugin
   - htop
   - tree
+  - cronie-noanacron
 
 yum_repos:
   epel-release:
-    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
     enabled: true
     failovermethod: priority
@@ -100,23 +101,8 @@ mounts:
 
 
 runcmd:
-  # - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  # - chmod 755 /usr/local/bin/docker-compose
-  - 
+  - echo $releasever $basearch
   - mkdir -p /data /var/lib/docker /app
-  # - parted /dev/vdb --script  mktable gpt
-  # - parted /dev/vdc --script  mktable gpt
-  # - parted /dev/vdd --script  mktable gpt
-  # - parted /dev/vdb --script  mkpart primary  xfs 0% 100%
-  # - parted /dev/vdc --script  mkpart primary  xfs 0% 100%
-  # - parted /dev/vdd --script  mkpart primary  xfs 0% 100%
-  # - mkfs.xfs /dev/vdc1
-  # - mkfs.xfs /dev/vdb1
-  # - mkfs.xfs /dev/vdd1
-  # - echo "/dev/vdc1                /var/lib/docker       xfs     defaults        0 0" >> /etc/fstab
-  # - echo "/dev/vdb1                /data                 xfs     defaults        0 0" >> /etc/fstab
-  # - echo "/dev/vdd1                /app                  xfs     defaults        0 0" >> /etc/fstab
-  # - mount -a
   - chown -R bento:bento /data/
   - chown -R bento:bento /app
   - restorecon -R sake
