@@ -8,4 +8,4 @@ PROJECT_NAME=bento-rocky-test                                   # Name of the pr
 DATA_VOLUME_SIZE=5                           # /data volume size in GB
 APP_VOLUME_SIZE=5                             # /app volume size in GB
 FLAVOR="ha4-15gb"                               # Openstack flavor for compute resources
-IMAGE="f95b59a2-99fd-4b7f-912c-d7f17640a791"    # Rocky 9,3
+IMAGE=$ROCKY_9_3_IMAGE_UUID

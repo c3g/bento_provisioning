@@ -22,6 +22,10 @@ packages:
   - zlib-devel
   - sqlite-devel  # specific to Centos/Rocky 9
 
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
 yum_repos:
   epel-release:
     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
