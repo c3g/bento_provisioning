@@ -234,6 +234,19 @@ If a Bento container has an `exited` status, check its logs with `./bentoctl.bas
 
 When all containers are up, you can open a browser window and navigate to your brand new Bento node!
 
+### Migrate data
+
+If needed, data can be migrated from one instance to another with one command.
+Assuming you are in a terminal that can ssh both instances, and that you identified the source and target paths:
+
+```bash
+# Copies    /data/bento_data/15/            from    qa.bento.c3g.calculquebec.ca
+# To        /data/bento_data/old_qa_copy    on      qa.bento.sd4h.ca
+# Note: with the '-3' flag, the path begins after the first '/'
+scp -r -3 scp://bento@qa.bento.c3g.calculquebec.ca//data/bento_data/15/ \
+    scp://bento@qa.bento.sd4h.ca//data/bento_data/old_qa_copy
+```
+
 ## On the proxy server
 
 Setup the stream.conf_tpl file to <project>.conf and copy it to
