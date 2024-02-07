@@ -237,15 +237,39 @@ When all containers are up, you can open a browser window and navigate to your b
 ### Migrate data
 
 If needed, data can be migrated from one instance to another with one command.
-Assuming you are in a terminal that can ssh both instances, and that you identified the source and target paths:
+Assuming you are in a terminal that can ssh the target instance.
 
 ```bash
 # Copies    /data/bento_data/15/            from    qa.bento.c3g.calculquebec.ca
 # To        /data/bento_data/old_qa_copy    on      qa.bento.sd4h.ca
-# Note: with the '-3' flag, the path begins after the first '/'
-scp -r -3 scp://bento@qa.bento.c3g.calculquebec.ca//data/bento_data/15/ \
-    scp://bento@qa.bento.sd4h.ca//data/bento_data/old_qa_copy
+
+# Dry run -n
+rsync -ahvn /data/bento_data/15 bento@qa.bento.sd4h.ca/data/bento_data/old_qa_copy
+
+# Real deal
+rsync -ahv /data/bento_data/15 bento@qa.bento.sd4h.ca/data/bento_data/old_qa_copy
 ```
+
+### Migrate Keycloak data
+
+A Keycloak instance database can be moved from an instance to another.
+However, the original database must be prepared for the migration if the new instance uses different domains.
+
+1. Login to the Keycloak admin page in a browser
+2. Select the Bento realm
+3. Select the "Clients" section
+4. Select the Bento client
+5. Add the required URIs for the new domains
+6. Save the modifications
+
+In the example below, the original URIs were only for `ichange.c3g.calculquebec.ca`.
+Since we plan on migrating to `ichange.bento.sd4h.ca` and `staging.ichange.bento.sd4h.ca`, we need to add those as well.
+
+Once this is done, the auth data directory can be migrated to an instance that will serve the new domains, provided the credentials stay the same.
+
+After the Keycloak DB is migrated, login to the admin page and remove the unecessary URIs on all instances.
+
+![Web client redirects/origins](./docs/keycloak_uris.png)
 
 ## On the proxy server
 
