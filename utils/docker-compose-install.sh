@@ -2,8 +2,8 @@
 
 # Run this script on a VM to install desired docker compose plugin version from binaries
 
-# V2.24.2
-COMPOSE_RELEASE="https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-linux-x86_64"
+# V2.25.0
+COMPOSE_RELEASE="https://github.com/docker/compose/releases/download/v2.25.0/docker-compose-linux-x86_64"
 
 # Dir setup
 PLUGINS_DIR=$HOME/.docker/cli-plugins
