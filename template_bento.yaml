@@ -54,7 +54,7 @@ users:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGxum9RRpQUxPaSL5FJP/bXM0P4vs23EuMkJoXvA5TV6 victor.rocheleau@mcgill.ca
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPjXNvynxihSsSiEQYK2wfSNWA6SdUFFylOx1CZUPXCu victor.rocheleau@mcgill.ca
   - name: bento
-    groups: adm, wheel, systemd-journal, bento-v2-dev-data, docker
+    groups: adm, wheel, systemd-journal, bento-data, docker
     selinux_user: unconfined_u
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
@@ -69,6 +69,8 @@ users:
   - name: bento-data
     ssh_authorized_keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKNh8QVIYdqgnPK1jS2slJ7Xmcz3eEfqGRaSKqKK3gSF poq@frugal
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGxum9RRpQUxPaSL5FJP/bXM0P4vs23EuMkJoXvA5TV6 victor.rocheleau@mcgill.ca
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPjXNvynxihSsSiEQYK2wfSNWA6SdUFFylOx1CZUPXCu victor.rocheleau@mcgill.ca
 write_files:
   - content: PATH=$PATH:/usr/local/bin
     path: /etc/profile.d/sh.local
@@ -113,8 +115,11 @@ mounts:
 runcmd:
   # Init /data /app /var/lib/docker mounted directories
   - mkdir -p /data /var/lib/docker /app
-  - chown -R bento:bento /data/
+  # Set directories owner/group
+  - chown -R bento:bento-data /data/
   - chown -R bento:bento /app
+  # Allow bento-data to read/write on /data
+  - chmod g+rw /data
   # SSH setup
   - restorecon -R sake
      - "(echo -e '\nHostKeyAlgorithms ssh-rsa\n' >> /etc/ssh/sshd_config && systemctl restart sshd)"
