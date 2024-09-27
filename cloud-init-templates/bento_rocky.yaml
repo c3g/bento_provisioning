@@ -43,6 +43,7 @@ yum_repos:
     gpgkey: https://download.docker.com/linux/centos/gpg
     name: Docker CE Stable - Debuginfo $basearch
 
+# ADD PUBLIC SSH KEYS HERE
 users:
   - name: sake
     groups: adm, wheel, systemd-journal
@@ -71,10 +72,12 @@ users:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKNh8QVIYdqgnPK1jS2slJ7Xmcz3eEfqGRaSKqKK3gSF poq@frugal
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGxum9RRpQUxPaSL5FJP/bXM0P4vs23EuMkJoXvA5TV6 victor.rocheleau@mcgill.ca
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPjXNvynxihSsSiEQYK2wfSNWA6SdUFFylOx1CZUPXCu victor.rocheleau@mcgill.ca
+
 write_files:
   - content: PATH=$PATH:/usr/local/bin
     path: /etc/profile.d/sh.local
     permissions: "0644"
+
 
 device_aliases:
   data_disk: /dev/vdb

@@ -1,0 +1,139 @@
+#cloud-config for generic Rocky VM with Docker
+packages:
+  - git
+  - vim
+  - pciutils
+  - unzip
+  - wget
+  - make
+  - docker-ce-cli
+  - haveged
+  - docker-ce
+  - containerd.io
+  - docker-compose-plugin
+  - htop
+  - tree
+  - cronie-noanacron
+  # Required to build python 3.10
+  - gcc
+  - openssl-devel
+  - bzip2-devel
+  - libffi-devel 
+  - zlib-devel
+  - sqlite-devel  # specific to Centos/Rocky 9
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+yum_repos:
+  epel-release:
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
+    enabled: true
+    failovermethod: priority
+    gpgcheck: true
+    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
+    name: Extra Packages for Enterprise Linux 9 - Release
+  docker-ce-stable:
+    baseurl: >
+     https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    enabled: true
+    failovermethod: priority
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    name: Docker CE Stable - Debuginfo $basearch
+
+# ADD PUBLIC SSH KEYS HERE
+users:
+  - name: $NODE_ADMIN_USER
+    groups: adm, wheel, systemd-journal
+    homedir: /sake
+    selinux_user: unconfined_u
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys: $NODE_ADMIN_USER_PUBKEYS
+  - name: $APP_ADMIN_USER
+    groups: adm, wheel, systemd-journal, ${DATA_USER}, docker
+    selinux_user: unconfined_u
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys: $APP_ADMIN_USER_PUBKEYS
+  - name: $DATA_USER
+    ssh_authorized_keys: $DATA_USER_PUBKEYS
+
+write_files:
+  - content: PATH=$PATH:/usr/local/bin
+    path: /etc/profile.d/sh.local
+    permissions: "0644"
+
+
+device_aliases:
+  data_disk: /dev/vdb
+  docker_disk: /dev/vdc
+  app_disk: /dev/vdd
+
+disk_setup:
+  data_disk:
+    table_type: gpt
+    layout: true
+    overwrite: false
+  app_disk:
+    table_type: gpt
+    layout: true
+    overwrite: true
+  docker_disk:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+  - label: data_fs
+    device: /dev/vdb1
+    filesystem: xfs
+  - label: docker_fs
+    device: /dev/vdc1
+    filesystem: xfs
+  - label: app_fs
+    device: /dev/vdd1
+    filesystem: xfs
+
+mounts:
+  - [ /dev/vdc1, /var/lib/docker, xfs, "defaults,nofail", "0", "0"]
+  - [ /dev/vdb1, /data,           xfs, "defaults,nofail", "0", "0"]
+  - [ /dev/vdd1, /app,            xfs, "defaults,nofail", "0", "0"]
+
+
+runcmd:
+  # Init /data /app /var/lib/docker mounted directories
+  - mkdir -p /data /var/lib/docker /app
+  # Set directories owner/group
+  - chown -R ${APP_ADMIN_USER}:${DATA_USER} /data/
+  - chown -R ${APP_ADMIN_USER}:${APP_ADMIN_USER} /app
+  # Allow DATA_USER to read/write on /data
+  - chmod g+rw /data
+  # SSH setup
+  - restorecon -R sake
+     - "(echo -e '\nHostKeyAlgorithms ssh-rsa\n' >> /etc/ssh/sshd_config && systemctl restart sshd)"
+  - dnf upgrade -y
+  - systemctl disable kdump
+  # Grub setup
+  - sed -i 's/crashkernel=auto/crashkernel=no/' /etc/default/grub
+  - sed -i 's/GRUB_CMDLINE_LINUX="[^"]*/& nouveau.modeset=0 rd.driver.blacklist=nouveau/' /etc/default/grub
+  - grub2-mkconfig -o /boot/grub2/grub.cfg
+  # rrsync setup
+  - chmod 755 $(ls /usr/share/doc/rsync*/support/rrsync)
+  - sudo ln -s $(ls /usr/share/doc/rsync*/support/rrsync) /usr/bin/rrsync
+  # Dev Tools
+  - dnf groupinstall -y 'Development Tools'
+  # Docker
+  - systemctl enable docker && systemctl start docker
+  # Python 3.10 source install to /opt
+  # Use a valid Python version available on https://www.python.org/ftp/python/
+  # Refer to the Bento repo for the python version requirement https://github.com/bento-platform/bento
+  - wget https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tar.xz
+  - tar -xf Python-3.10.13.tar.xz -C /opt/ && rm Python-3.10.13.tar.xz && cd /opt/Python-3.10.13
+  - ./configure --enable-optimizations && make -j 2 && make altinstall
+
+
+disable_ec2_metadata: false
+timezone: "UTC"
+fqdn: $PROJECT_NAME
+output: { all: "| tee -a /var/log/cloud-init-sd4h-config.log" }
