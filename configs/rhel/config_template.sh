@@ -3,6 +3,9 @@
 # This config template can be used on any OpenStack project, 
 # provided that you fill in the correct project-specific UUIDs from OpenStack.
 
+# Load global SD4H variables (e.g. OS UUIDs)
+source configs/sd4h.env
+
 #### OpenStack project specific configs
 SSH_KEY=""                      # OpenStack key pair NAME
 LAN_ID=""                       # OpenStack LAN network UUID

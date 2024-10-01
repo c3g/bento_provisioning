@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load global SD4H variables (e.g. OS UUIDs)
+source configs/sd4h.env
+
 # Load Bento project specific OpenStack config
 source configs/bento/.env
 
