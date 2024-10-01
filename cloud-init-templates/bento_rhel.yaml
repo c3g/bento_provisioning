@@ -20,7 +20,7 @@ packages:
   - bzip2-devel
   - libffi-devel 
   - zlib-devel
-  - sqlite-devel  # specific to Centos/Rocky 9
+  - sqlite-devel  # specific to RHEL 9
 
 package_update: true
 package_upgrade: true

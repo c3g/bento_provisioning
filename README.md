@@ -3,15 +3,15 @@
 This repository contains tools and documentation required to deploy a virtual machine (VM) on the SD4H cloud with OpenStack.
 For SD4H specific operations, you must be the member of an SD4H OpenStack project.
 
-Outside of the SD4H platform, you can use the [bento_rocky.yaml](./cloud-init-templates/bento_rocky.yaml) 
-cloud-init file to initialize a Rocky Linux VM for Bento in the platform of your choice.
+Outside of the SD4H platform, you can use the [bento_rhel.yaml](./cloud-init-templates/bento_rhel.yaml) 
+cloud-init file to initialize a RHEL Linux VM (Rocky, AlmaLinux) for Bento in the platform of your choice.
 
 ## Cloud-Init
 
 This repository uses [cloud-init](https://cloudinit.readthedocs.io/en/latest/) to perform instance initialization.
 The templates for cloud-init can be found in [cloud-init-templates](./cloud-init-templates):
--   [bento_rocky.yaml](./cloud-init-templates/bento_rocky.yaml): for VMs hosting a [Bento](https://github.com/bento-platform/bento) deployment
--   [generic_rocky.yaml](./cloud-init-templates/generic_rocky.yaml): for a simple Rocky Linux VM
+-   [bento_rhel.yaml](./cloud-init-templates/bento_rhel.yaml): for VMs hosting a [Bento](https://github.com/bento-platform/bento) deployment
+-   [generic_rhel.yaml](./cloud-init-templates/generic_rhel.yaml): for a simple RHEL Linux VM
 
 In these templates, we define the following:
 - Users
@@ -61,8 +61,8 @@ openstack server list
 Create a new resources configuration file from the template.
 
 ```bash
-# For a generic Rocky VM in any OpenStack project
-cp configs/rocky/config_template.sh configs/rocky/<instance>_config.sh
+# For a generic RHEL VM in any OpenStack project
+cp configs/rhel/config_template.sh configs/rhel/<instance>_config.sh
 
 # For a Bento VM on the Bento OpenStack project
 cp configs/bento/config_template.sh configs/bento/<instance>_config.sh
@@ -82,7 +82,7 @@ IMAGE=$ROCKY_9_3_IMAGE_UUID # UUID loaded from .configs/.env
 DOCKER_VOLUME_SIZE=20
 ```
 
-**For a generic Rocky instance, you need to set the same variables as above
+**For a generic RHEL instance, you need to set the same variables as above
 , plus others that are specific to the targeted OpenStack project.**
 ```bash
 #### OpenStack project specific configs
@@ -129,10 +129,10 @@ Usage example:
 # Lauch the node creation script with a config argument
 
 # For a Bento instance
-bash init_sd4h_vm.sh configs/bento/<instance>_config.sh cloud-init-templates/bento_rocky.yaml
+bash init_sd4h_vm.sh configs/bento/<instance>_config.sh cloud-init-templates/bento_rhel.yaml
 
-# For a generic Rocky instance
-bash init_sd4h_vm.sh configs/rocky/<instance>_config.sh cloud-init-templates/generic_rocky.yaml
+# For a generic RHEL instance
+bash init_sd4h_vm.sh configs/rhel/<instance>_config.sh cloud-init-templates/generic_rhel.yaml
 
 # The script will ask to validate the project's name from the config
 
