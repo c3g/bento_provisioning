@@ -1,4 +1,5 @@
-#cloud-config for generic RHEL VM with Docker
+#cloud-config 
+# For RHEL 9 VM
 packages:
   - git
   - vim
@@ -6,14 +7,16 @@ packages:
   - unzip
   - wget
   - make
-  - docker-ce-cli
   - haveged
-  - docker-ce
-  - containerd.io
-  - docker-compose-plugin
   - htop
   - tree
   - cronie-noanacron
+  # tpl__use_docker__start
+  - docker-ce-cli
+  - docker-ce
+  - containerd.io
+  - docker-compose-plugin
+  # tpl__use_docker__end
 
 package_update: true
 package_upgrade: true
@@ -27,6 +30,7 @@ yum_repos:
     gpgcheck: true
     gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
     name: Extra Packages for Enterprise Linux 9 - Release
+  # tpl__use_docker__start
   docker-ce-stable:
     baseurl: >
      https://download.docker.com/linux/centos/$releasever/$basearch/stable
@@ -35,73 +39,111 @@ yum_repos:
     gpgcheck: true
     gpgkey: https://download.docker.com/linux/centos/gpg
     name: Docker CE Stable - Debuginfo $basearch
+  # tpl__use_docker__end
 
 # ADD PUBLIC SSH KEYS HERE
 users:
   - name: $NODE_ADMIN_USER
     groups: adm, wheel, systemd-journal
-    homedir: /sake
+    homedir: /$NODE_ADMIN_USER
     selinux_user: unconfined_u
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys: $NODE_ADMIN_USER_PUBKEYS
   - name: $APP_ADMIN_USER
-    groups: adm, wheel, systemd-journal, ${DATA_USER}, docker
+    groups:
+      - adm
+      - wheel
+      - systemd-journal
+      # tpl__data_disk_yes__start
+      - ${DATA_USER}
+      # tpl__data_disk_yes__end
+      # tpl__use_docker__start
+      - docker
+      # tpl__use_docker__end
     selinux_user: unconfined_u
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys: $APP_ADMIN_USER_PUBKEYS
+  # tpl__data_disk_yes__start
   - name: $DATA_USER
     ssh_authorized_keys: $DATA_USER_PUBKEYS
+  # tpl__data_disk_yes__end
 
 write_files:
   - content: PATH=$PATH:/usr/local/bin
     path: /etc/profile.d/sh.local
     permissions: "0644"
 
-
 device_aliases:
+  # tpl__data_disk_yes__start
   data_disk: /dev/vdb
-  docker_disk: /dev/vdc
+  # tpl__data_disk_yes__end
+  # tpl__app_disk_yes__start
   app_disk: /dev/vdd
+  # tpl__app_disk_yes__end
+  # tpl__use_docker__start
+  docker_disk: /dev/vdc
+  # tpl__use_docker__end
 
 disk_setup:
+  # tpl__data_disk_yes__start
   data_disk:
     table_type: gpt
     layout: true
     overwrite: false
+  # tpl__data_disk_yes__end
+  # tpl__app_disk_yes__start
   app_disk:
     table_type: gpt
     layout: true
     overwrite: true
+  # tpl__app_disk_yes__end
+  # tpl__use_docker__start
   docker_disk:
     table_type: gpt
     layout: true
     overwrite: true
+  # tpl__use_docker__end
 
 fs_setup:
+  # tpl__data_disk_yes__start
   - label: data_fs
     device: /dev/vdb1
     filesystem: xfs
-  - label: docker_fs
-    device: /dev/vdc1
-    filesystem: xfs
+  # tpl__data_disk_yes__end
+  # tpl__app_disk_yes__start
   - label: app_fs
     device: /dev/vdd1
     filesystem: xfs
+  # tpl__app_disk_yes__end
+  # tpl__use_docker__start
+  - label: docker_fs
+    device: /dev/vdc1
+    filesystem: xfs
+  # tpl__use_docker__end
 
 mounts:
-  - [ /dev/vdc1, /var/lib/docker, xfs, "defaults,nofail", "0", "0"]
+  # tpl__data_disk_yes__start
   - [ /dev/vdb1, /data,           xfs, "defaults,nofail", "0", "0"]
+  # tpl__data_disk_yes__end
+  # tpl__app_disk_yes__start
   - [ /dev/vdd1, /app,            xfs, "defaults,nofail", "0", "0"]
-
+  # tpl__app_disk_yes__end
+  # tpl__use_docker__start
+  - [ /dev/vdc1, /var/lib/docker, xfs, "defaults,nofail", "0", "0"]
+  # tpl__use_docker__end
 
 runcmd:
-  # Init /data /app /var/lib/docker mounted directories
-  - mkdir -p /data /var/lib/docker /app
-  # Set directories owner/group
-  - chown -R ${APP_ADMIN_USER}:${DATA_USER} /data/
-  - chown -R ${APP_ADMIN_USER}:${APP_ADMIN_USER} /app
-  # Allow DATA_USER to read/write on /data
-  - chmod g+rw /data
+  # DIRECTORIES INIT
+  # tpl__data_disk_yes__start
+  - mkdir -p /data && chown -R ${APP_ADMIN_USER}:${DATA_USER} /data/ && chmod g+rw /data
+  - chown -R ${APP_ADMIN_USER}:${DATA_USER} /data/ && chmod g+rw /data
+  # tpl__data_disk_yes__end
+  # tpl__app_disk_yes__start
+  - mkdir -p /app && chown -R ${APP_ADMIN_USER}:${APP_ADMIN_USER} /app
+  # tpl__app_disk_yes__end
+  # tpl__use_docker__start
+  - mkdir -p /var/lib/docker
+  # tpl__use_docker__end
   # SSH setup
   - restorecon -R sake
      - "(echo -e '\nHostKeyAlgorithms ssh-rsa\n' >> /etc/ssh/sshd_config && systemctl restart sshd)"
@@ -116,9 +158,9 @@ runcmd:
   - sudo ln -s $(ls /usr/share/doc/rsync*/support/rrsync) /usr/bin/rrsync
   # Dev Tools
   - dnf groupinstall -y 'Development Tools'
-  # Docker
+  # tpl__use_docker__start
   - systemctl enable docker && systemctl start docker
-
+  # tpl__use_docker__end
 
 disable_ec2_metadata: false
 timezone: "UTC"

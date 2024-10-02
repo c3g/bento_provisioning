@@ -7,13 +7,13 @@ echo "    Deploy a bento node with root, data and docker volumes"
 echo "    <project-config-file> the path to the project configuration file."
 echo "    <cloud-init-template> the path to the cloud-init template file"
 echo "options"
-echo "    -n        DO not create the volume to mount"
+echo "    -s        SAFE MODE: only creates cloud-init file under ./tmp without creating resources"
 
 }
-while getopts ":hn" opt; do
+while getopts ":hs" opt; do
   case $opt in
-  n)
-        NO_VOLUME=True
+  s)
+        SAFE_MODE=1
         ;;
   h)
       usage
@@ -53,12 +53,38 @@ done
 mkdir -p .tmp/
 CLOUD_INIT_CONFIG=.tmp/${PROJECT_NAME}.yaml
 
-# Replace environment variables in the template file to create the final cloud-init config
+# Replace environment variables in the template file to create the intermediate cloud-init config
 #   - User names 
 #   - Public SSH keys
 #   - Hostname
 envsubst '$NODE_ADMIN_USER,$APP_ADMIN_USER,$DATA_USER,$NODE_ADMIN_USER_PUBKEYS,$APP_ADMIN_USER_PUBKEYS,$DATA_USER_PUBKEYS,$PROJECT_NAME' \
  < ${CLOUD_INIT_TEMPLATE} > $CLOUD_INIT_CONFIG
+
+# Final Templating: remove sections based on arguments
+if [ -z $DOCKER_VOLUME_SIZE ]; then
+  echo "Fine tuning ${CLOUD_INIT_CONFIG} to not use Docker"
+  sed -i.bak \
+    '/tpl__use_docker__start/,/tpl__use_docker__end/d' \
+    $CLOUD_INIT_CONFIG
+fi
+if [ -z $DATA_VOLUME_SIZE ]; then
+  echo "Fine tuning ${CLOUD_INIT_CONFIG} to not use a data volume"
+  sed -i.bak \
+    '/tpl__data_disk_yes__start/,/tpl__data_disk_yes__end/d' \
+    $CLOUD_INIT_CONFIG
+fi
+if [ -z $APP_VOLUME_SIZE ]; then
+  echo "Fine tuning ${CLOUD_INIT_CONFIG} to not use an app data volume"
+  sed -i.bak \
+    '/tpl__app_disk_yes__start/,/tpl__app_disk_yes__end/d' \
+    $CLOUD_INIT_CONFIG
+fi
+
+if [ $SAFE_MODE -eq 1 ]; then
+  echo "   [SAFE MODE] Skipping resources creation."
+  echo "   [SAFE MODE] Cloud-Init file created: ${CLOUD_INIT_CONFIG}"
+  exit 0
+fi
 
 BLOCK_DEVICE_PARAMS=()
 create_volume_if_needed ()
@@ -85,14 +111,13 @@ create_volume_if_needed ()
   BLOCK_DEVICE_PARAMS+=($block_device_param)
 }
 
-if [ -z ${NO_VOLUME+x} ]; then
-  # create the data volume (EC) if the size is set
-  create_volume_if_needed ${PROJECT_NAME}-data "${DATA_VOLUME_SIZE}" volumes-ec vdb
-  # create app volume (SSD) if the size is set
-  create_volume_if_needed ${PROJECT_NAME}-app "${APP_VOLUME_SIZE}" volumes-ssd vdd
-  # create a volume for Docker if the size is set
-  create_volume_if_needed ${PROJECT_NAME}-docker-sandbox "${DOCKER_VOLUME_SIZE}" volumes-ssd vdc
-fi
+# VOLUMES CREATION
+# create the data volume (EC) if the size is set
+create_volume_if_needed ${PROJECT_NAME}-data "${DATA_VOLUME_SIZE}" volumes-ec vdb
+# create app volume (SSD) if the size is set
+create_volume_if_needed ${PROJECT_NAME}-app "${APP_VOLUME_SIZE}" volumes-ssd vdd
+# create a volume for Docker if the size is set
+create_volume_if_needed ${PROJECT_NAME}-docker-sandbox "${DOCKER_VOLUME_SIZE}" volumes-ssd vdc
 
 openstack server create --key-name ${SSH_KEY} --flavor  ${FLAVOR} \
   --image ${IMAGE} \
@@ -101,10 +126,6 @@ openstack server create --key-name ${SSH_KEY} --flavor  ${FLAVOR} \
   --user-data  ${CLOUD_INIT_CONFIG}  \
   "${BLOCK_DEVICE_PARAMS[@]}" \
   ${PROJECT_NAME}
-
-  # --block-device-mapping vdb=${PROJECT_NAME}-data  \
-  # --block-device-mapping vdd=${PROJECT_NAME}-app \
-  # --block-device-mapping vdc=${PROJECT_NAME}-docker-sandbox \
 
 SERVER_ID=$(openstack server list -f json \
     |  jq -r   '.[] | select((."Name"=="'${PROJECT_NAME}'")).ID')

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load base config
-source configs/.env
+source configs/bento/.env
 
 # Instance specific configs
 export PROJECT_NAME=bento-sandbox                      # Name of the project/instance

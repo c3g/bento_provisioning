@@ -3,17 +3,16 @@
 This repository contains tools and documentation required to deploy a virtual machine (VM) on the SD4H cloud with OpenStack.
 For SD4H specific operations, you must be the member of an SD4H OpenStack project.
 
-Outside of the SD4H platform, you can use the [bento_rhel.yaml](./cloud-init-templates/bento_rhel.yaml) 
-cloud-init file to initialize a RHEL Linux VM (Rocky, AlmaLinux) for Bento in the platform of your choice.
 
 ## Cloud-Init
 
 This repository uses [cloud-init](https://cloudinit.readthedocs.io/en/latest/) to perform instance initialization.
 The templates for cloud-init can be found in [cloud-init-templates](./cloud-init-templates):
--   [bento_rhel.yaml](./cloud-init-templates/bento_rhel.yaml): for VMs hosting a [Bento](https://github.com/bento-platform/bento) deployment
--   [generic_rhel.yaml](./cloud-init-templates/generic_rhel.yaml): for a simple RHEL Linux VM
+-   [generic_rhel.yaml](./cloud-init-templates/generic_rhel.yaml): configures a RHEL Linux VM
 
-In these templates, we define the following:
+After running the `init_sd4h_vm.sh` script with valid arguments, the final cloud-init file is created from the template under `.tmp`.
+
+In these cloud-init files, we define the following:
 - Users
   - Permissions
   - Public SSH keys
@@ -54,7 +53,7 @@ openstack server list
 ```
 
 
-## Create a VM
+## Create a VM on SD4H
 
 ### Prepare the resources config
 
@@ -69,7 +68,14 @@ cp configs/bento/config_template.sh configs/bento/<instance>_config.sh
 ```
 
 In the `<instance>_config.sh` file you just created, modify the values for the project's name
-, data volume size, flavor and OS image accordingly.
+, app and data volumes sizes, flavor and OS image accordingly.
+
+If needed, you can override common variables declared in `configs/sd4h.env` and `configs/bento/.env`, 
+such as the default root volume size.
+
+To omit a volume (app, data, or docker), simply set the volume size variable to null:
+* Setting the `DOCKER_VOLUME_SIZE` variable to null will also skip Docker installation
+* Setting the `DATA_VOLUME_SIZE` variable to null will prevent the creation of the `DATA_USER` user
 
 **For a Bento specific instance, you only need to set the following:**
 ```bash
@@ -78,7 +84,7 @@ export PROJECT_NAME=bento-staging
 DATA_VOLUME_SIZE=1000
 APP_VOLUME_SIZE=200
 FLAVOR="ha4-15gb"
-IMAGE=$ROCKY_9_3_IMAGE_UUID # UUID loaded from .configs/.env
+IMAGE=$ROCKY_9_3_IMAGE_UUID # UUID loaded from .configs/bento/.env
 DOCKER_VOLUME_SIZE=20
 ```
 
@@ -114,14 +120,45 @@ With the configuration above, we will have the following users setup:
 - `app-operator`: A user can SSH as `app-operator` if he has the provided key
 - `data-operator`: No one can SSH as `data-operator`, may be added later if needed.
 
+### Initialize the configured cloud-init file
+
+Before creating resources in the cloud, it is best to take a look at the cloud-init file that will be 
+used to initialize the VM. The `init_sd4h_vm.sh` script can be used just for that.
+
+The script takes 2 positional arguments:
+1. `config` file path: the path to the `<instance>_config.sh` you created
+2. `cloud-init` file path: the path the cloud-init file you wish to use
+
+As well as one option:
+* `-s`: Safe-Mode
+  * NO resources creation in OpenStack (VM and volume creation is skipped)
+  * Only creates the cloud-init file under `.tmp`
+
+**Note: A sourced OpenStack RC file is NOT needed when using Safe-Mode.**
+
+```bash
+# Create a cloud-init file for a Bento instance on RHEL 9
+
+# run the script with -s and confirm the project's name
+./init_sd4h_vm.sh -s configs/bento/<instance>_config.sh cloud-init-templates/generic_rhel.yaml
+# The project name is : <project_name> (y/n) y
+# proceeding with <project_name>
+#    [SAFE MODE] Skipping resources creation.
+#    [SAFE MODE] Cloud-Init file created: .tmp/<project_name>.yaml
+
+# Inspect the resulting cloud-init file
+cat .tmp/<project_name>.yaml
+```
+
+If there are errors in the cloud-init file, tweak the configuration file and run the script again.
+
+Repeat the process until the resulting cloud-init is correct.
+
 ### Initialize the server on OpenStack
 
 The `init_sd4h_vm.sh` script can be used to quickly create a new VM on SD4h.
 It uses the `openstack` cli to create the server (VM) with required volumes and network interfaces.
 
-The script takes 2 positional arguments:
-1. config file path: the path to the `<instance>_config.sh` you created
-2. cloud-init file path: the path the cloud-init file you wish to use
 
 Usage example:
 
@@ -129,18 +166,18 @@ Usage example:
 # Lauch the node creation script with a config argument
 
 # For a Bento instance
-bash init_sd4h_vm.sh configs/bento/<instance>_config.sh cloud-init-templates/bento_rhel.yaml
+./init_sd4h_vm.sh configs/bento/<instance>_config.sh cloud-init-templates/generic_rhel.yaml
 
 # For a generic RHEL instance
-bash init_sd4h_vm.sh configs/rhel/<instance>_config.sh cloud-init-templates/generic_rhel.yaml
+./init_sd4h_vm.sh configs/rhel/<instance>_config.sh cloud-init-templates/generic_rhel.yaml
 
 # The script will ask to validate the project's name from the config
 
 # If all went well, you should see the new instance
 openstack server list
 
-# If your ssh key is listed in cloud-init-bento.yaml and the server has a floating IP, you can ssh with:
-ssh bento@<floating-ip>
+# If your ssh key is listed under a <user> in the cloud-init file and the server has a floating IP, you can ssh with:
+ssh <user>@<floating-ip>
 ```
 
 

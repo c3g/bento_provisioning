@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load base config
-source configs/.env
+source configs/bento/.env
 
 # Instance specific configs
 PROJECT_NAME="bento-qa"
